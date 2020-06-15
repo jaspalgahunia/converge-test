@@ -1,0 +1,39 @@
+{
+  "name": "converge-backend-exercise",
+  "version": "0.2.1",
+  "description": "Engineering exercise for full-stack candidates.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r esm ./src/index.js",
+    "dev": "nodemon --exec npm start",
+    "test": "./node_modules/.bin/nyc ./node_modules/.bin/_mocha --require esm --config './mocha-config.js' --timeout 600000 --exit",
+    "generate-docs": "./node_modules/.bin/jsdoc -c ./jsdoc-config.json"
+  },
+  "keywords": [
+    "test",
+    "interview",
+    "exercise",
+    "full-stack",
+    "http-server"
+  ],
+  "author": "Gideon Farrell <gideon@converge.io>",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "axios": "^0.19.2",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^3.10.2",
+    "jsdoc": "^3.6.4",
+    "mocha": "^8.0.1",
+    "mocha-logger": "^1.0.6",
+    "nodemon": "^2.0.4",
+    "nyc": "^15.1.0",
+    "sinon": "^9.0.2"
+  },
+  "dependencies": {
+    "esm": "^3.2.25",
+    "fastify": "^2.14.1",
+    "moment": "^2.26.0",
+    "node-localstorage": "^2.1.6"
+  }
+}

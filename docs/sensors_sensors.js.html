@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: sensors/sensors.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: sensors/sensors.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Sensor Operations
+ */
+
+/**
+ * @module sensorOperations * */
+
+import { LocalStorage } from "node-localstorage";
+
+const localStorage = new LocalStorage('./sensorData');
+
+/**
+ * Check the Sensor thresholds
+ *
+ * @param {fastifyRequest} request - Fastify request object
+ * @param {string} sensorId
+ * @param {object} sensorData
+ */
+const checkSensorThresholds = (request, sensorId, sensorData) => {
+  if (!sensorData.lowThreshold &amp;&amp; !sensorData.highThreshold) return false;
+
+  request.log.debug(
+    `Checking thresholds '${sensorData.lowThreshold} - ${sensorData.highThreshold}' for sensor '${sensorId}'`
+  );
+
+  const sensorFilter = sensorData.values.filter((data) =>
+    data.value &lt; sensorData.lowThreshold || data.value > sensorData.highThreshold);
+
+  if (sensorFilter.length) {
+    // @TODO: Implement email/sns alert
+    request.log.error(`Sensor '${sensorId}' has hit the threshold`);
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Entry point for API
+ *
+ * @param {fastifyRequest} request - Fastify request object
+ * @param {fastifyResponse} reply - Fastify response object
+ * @returns {object} - {success: true}
+ * @throws {Error}
+ */
+const saveSensorData = async (request, reply) => {
+  const { body } = request;
+
+  request.log.debug(`Checking current sensor data for '${body.sensorId}'`);
+
+  let sensorData = { lowThreshold: null, highThreshold: null, values: [] };
+
+  const sensorDataString = localStorage.getItem(body.sensorId);
+
+  if (sensorDataString) {
+    sensorData = JSON.parse(sensorDataString);
+
+    const sensorDataResults = sensorData.values.find((data) => data.time === body.time);
+
+    if (sensorDataResults &amp;&amp; sensorDataResults.time) {
+      const error = new Error(`Error duplicate reading for Sensor Id '${body.sensorId}' at the time '${body.time}'`);
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  request.log.debug(`Saving data for Sensor '${body.sensorId}'`);
+
+  sensorData.values.push({
+    time: body.time,
+    value: body.value
+  });
+
+  localStorage.setItem(body.sensorId, JSON.stringify(sensorData));
+
+  checkSensorThresholds(request, body.sensorId, sensorData);
+
+  return reply.code(209).send({ sucess: true });
+};
+
+/**
+ * Entry point for API
+ *
+ * @param {fastifyRequest} request - Fastify request object
+ * @param {fastifyResponse} reply - Fastify response object
+ * @returns {object} - {success: true}
+ */
+const getSensorData = async (request, reply) => {
+  const { sensorId, since, until } = request.params;
+
+  request.log.debug(`Returning sensor data for '${sensorId}'`);
+
+  const sensorDataString = localStorage.getItem(sensorId);
+
+  if (!sensorDataString) {
+    return reply.code(209).send([]);
+  }
+
+  const sensorData = JSON.parse(sensorDataString);
+  const sensorFilter = sensorData.values.filter((data) => data.time >= since &amp;&amp; data.time &lt;= until);
+
+  return reply.code(209).send({ ...sensorData, values: sensorFilter });
+}
+
+/**
+ * Entry point for API
+ *
+ * @param {fastifyRequest} request - Fastify request object
+ * @param {fastifyResponse} reply - Fastify response object
+ * @returns {object} - {success: true}
+ */
+const saveSensorThreshold = async (request, reply) => {
+  const { body } = request;
+
+  request.log.debug(`Setting thresholds '${body.lowThreshold} - ${body.highThreshold}' for sensor '${body.sensorId}'`);
+
+  const sensorDataString = localStorage.getItem(body.sensorId);
+
+  if (!sensorDataString) {
+    const error = new Error(`Error cannot find Sensor '${body.sensorId}' to set threshold`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const sensorData = JSON.parse(sensorDataString);
+  sensorData.lowThreshold = body.lowThreshold;
+  sensorData.highThreshold = body.highThreshold;
+  localStorage.setItem(body.sensorId, JSON.stringify(sensorData));
+
+  checkSensorThresholds(request, body.sensorId, sensorData);
+
+  return reply.code(200).send({ sucess: true });
+}
+
+/**
+ * Entry point for API
+ *
+ * @param {fastifyRequest} request - Fastify request object
+ * @param {fastifyResponse} reply - Fastify response object
+ * @returns {object} - {success: true}
+ */
+const checkSensorThreshold = async (request, reply) => {
+  const { sensorId } = request.params;
+
+  const sensorDataString = localStorage.getItem(sensorId);
+
+  if (!sensorDataString) {
+    const error = new Error(`Error cannot find Sensor '${sensorId}' to get threshold`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const sensorData = JSON.parse(sensorDataString);
+  const threshold = checkSensorThresholds(request, sensorId, sensorData);
+  return reply.code(200).send({ threshold });
+}
+
+export { saveSensorData, getSensorData, saveSensorThreshold, checkSensorThreshold };</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-sensorOperations%2520_.html">sensorOperations *</a></li><li><a href="Routes_sensorRoutes%2520_.html">Routes:sensorRoutes *</a></li></ul><h3>Global</h3><ul><li><a href="global.html#saveSensorPayload">saveSensorPayload</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Mon Jun 15 2020 01:39:13 GMT+0100 (British Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
