@@ -19,7 +19,7 @@
   "author": "Gideon Farrell <gideon@converge.io>",
   "license": "UNLICENSED",
   "devDependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "eslint": "^3.10.2",
