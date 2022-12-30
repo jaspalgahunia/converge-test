@@ -24,7 +24,7 @@
     "chai-as-promised": "^7.1.1",
     "eslint": "^3.10.2",
     "jsdoc": "^3.6.4",
-    "mocha": "^8.0.1",
+    "mocha": "^8.4.0",
     "mocha-logger": "^1.0.6",
     "nodemon": "^2.0.4",
     "nyc": "^15.1.0",
